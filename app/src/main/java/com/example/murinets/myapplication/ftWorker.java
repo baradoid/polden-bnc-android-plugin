@@ -49,52 +49,18 @@ public class ftWorker implements SensorEventListener {
 
     //volatile int iCpuTemp = -1488;
     volatile int iBatteryTemp = -1488;
+    volatile int iHeadTemp = -1488;
     volatile int iDistance = -1;
     volatile int iPluginVer = 0x1115;
 
-    public int getBatteryTemp()
-    {
-        return iBatteryTemp;
-    }
-
-//    public int getCpuTemp()
-//    {
-//        return iCpuTemp;
-//    }
-
-    public int getDistance()
-    {
-        return iDistance;
-    }
-
-    public int getPluginVer()
-    {
-        return iPluginVer;
-    }
-
-    public int getHeadTemp(){
-        return 0;
-    }
-
+    public int getBatteryTemp() { return iBatteryTemp; }
+    public int getDistance() { return iDistance; }
+    public int getPluginVer() { return iPluginVer;}
+    public int getHeadTemp() { return iHeadTemp; }
+    public int getXpos() { return xPos; }
+    public int getYpos() { return yPos; }
     //private volatile float cpuTemp = 0;
 
-    public int getXpos()
-    {
-//        xPos++;
-//        if(xPos>8191){
-//            xPos = 0;
-//        }
-        return xPos;
-    }
-
-    public int getYpos()
-    {
-//        yPos++;
-//        if(yPos>8191){
-//            yPos = 0;
-//        }
-        return yPos;
-    }
 
     final Handler handler =  new Handler()
     {
@@ -106,7 +72,9 @@ public class ftWorker implements SensorEventListener {
             try {
                 xPos = Integer.parseInt(lastString.substring(0, 4), 16);
                 yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-                iDistance = Integer.parseInt(lastString.substring(10, 14), 16);
+                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+
             }
             catch (Exception e){
 
@@ -177,7 +145,7 @@ public class ftWorker implements SensorEventListener {
                     D2xxManager.FtDeviceInfoListNode fdiln = ftDev.getDeviceInfo();
                     System.out.println(String.format("device desc: %s\n sn: %s\n", fdiln.description, fdiln.serialNumber));
                     // Set Baud Rate
-                    ftDev.setBaudRate(115200);
+                    ftDev.setBaudRate(230400);
                     ftDev.setDataCharacteristics(D2xxManager.FT_DATA_BITS_8,
                                                  D2xxManager.FT_STOP_BITS_1,
                                                  D2xxManager.FT_PARITY_NONE);
