@@ -22,6 +22,8 @@ import android.content.BroadcastReceiver;
 
 import java.util.ArrayList;
 
+import java.net.InetAddress;
+import java.net.Socket;
 
 /**
  * Created by murinets on 03.10.2016.
@@ -47,11 +49,15 @@ public class ftWorker implements SensorEventListener {
     private int xPos=0;
     private int yPos=0;
 
+
     //volatile int iCpuTemp = -1488;
     volatile int iBatteryTemp = -1488;
     volatile int iHeadTemp = -1488;
     volatile int iDistance = -1;
     volatile int iPluginVer = 0x1115;
+
+    public static final String SERVERIP = "192.168.0.102";
+    public static final int SERVERPORT = 6340;
 
     public int getBatteryTemp() { return iBatteryTemp; }
     public int getDistance() { return iDistance; }
@@ -196,8 +202,10 @@ public class ftWorker implements SensorEventListener {
     {
         Handler mHandler;
         ArrayList<Byte> uartMsg = new ArrayList<Byte>();
-        byte[] readData = new byte[readLength];
+        //byte[] readData = new byte[readLength];
+        byte[] readData = new byte[22];
         char[] readDataToText = new char[readLength];
+        Socket socket = null;
 
         readThread(Handler h){
             mHandler = h;
@@ -208,11 +216,14 @@ public class ftWorker implements SensorEventListener {
         public void run()
         {
             int i;
-            int pollPeroiod = 50;
+            int pollPeroiod = 10;
             int cpuTempSendPeriod = 2000;
             int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
             int periodNum = 0;
+
+
+
 
 //            int cpuTempUpdatePeriodNum = 0;
 //            int cpuTempUpdatePeriod = 1000;
@@ -225,36 +236,59 @@ public class ftWorker implements SensorEventListener {
                 } catch (InterruptedException e) {
                 }
 
+                try {
+                    if (socket == null) {
+                        socket = new Socket(SERVERIP, SERVERPORT);
+                    } else {
+                        if(socket.isConnected() == true){
+                            socket.getOutputStream().write(Integer.toString(periodNum).getBytes());
+
+                        }
+//                        else{
+//                            socket.close();
+//                            socket = null;
+//                        }
+                    }
+                }
+                catch(Exception e){
+
+                }
+
                 synchronized(ftDev)
                 {
-                    iavailable = ftDev.getQueueStatus();
-                    if (iavailable > 0) {
 
-                        if(iavailable > readLength){
-                            iavailable = readLength;
-                        }
+                    ftDev.read(readData, 22);
+                    Message msg = mHandler.obtainMessage(0, new String(readData));
+                    mHandler.sendMessage(msg);
+                    //iavailable = ftDev.getQueueStatus();
 
-                        ftDev.read(readData, iavailable);
-
-                        for (i = 0; i < iavailable; i++) {
-                            uartMsg.add(readData[i]);
-                            readDataToText[i] = (char) readData[i];
-                            if(readDataToText[i] == '\n'){
-                                byte bArr[] = new byte[uartMsg.size()];
-
-                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
-                                    bArr[bi] = (byte) uartMsg.get(bi);
-                                }
-                                //bArr[bArr.length-2] = 0;
-                                //bArr[bArr.length-1] = 0;
-
-
-                                uartMsg.clear();
-                                Message msg = mHandler.obtainMessage(0, new String(bArr));
-                                mHandler.sendMessage(msg);
-                            }
-                        }
-                    }
+//                    if (iavailable > 0) {
+//
+//                        if(iavailable > readLength){
+//                            iavailable = readLength;
+//                        }
+//                        ftDev.read(readData, iavailable);
+//
+//
+//                        for (i = 0; i < iavailable; i++) {
+//                            uartMsg.add(readData[i]);
+//                            readDataToText[i] = (char) readData[i];
+//                            if(readDataToText[i] == '\n'){
+//                                byte bArr[] = new byte[uartMsg.size()];
+//
+//                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
+//                                    bArr[bi] = (byte) uartMsg.get(bi);
+//                                }
+//                                //bArr[bArr.length-2] = 0;
+//                                //bArr[bArr.length-1] = 0;
+//
+//
+//                                uartMsg.clear();
+//                                Message msg = mHandler.obtainMessage(0, new String(bArr));
+//                                mHandler.sendMessage(msg);
+//                            }
+//                        }
+//                    }
 
 //                    cpuTempUpdatePeriodNum++;
 //                    if(cpuTempUpdatePeriodNum >= cpuTempUpdatePeriodCnt){
