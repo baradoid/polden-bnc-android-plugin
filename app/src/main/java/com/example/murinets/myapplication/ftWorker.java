@@ -20,7 +20,13 @@ import java.io.RandomAccessFile;
 import java.io.IOException;
 import android.content.BroadcastReceiver;
 
+import java.net.Socket;
 import java.util.ArrayList;
+import java.io.File;
+import java.io.BufferedReader;
+import java.io.FileReader;
+
+
 
 
 /**
@@ -39,7 +45,7 @@ public class ftWorker implements SensorEventListener {
 
     public static final int readLength = 512;
 
-    public static String lastString = new String("");
+    volatile public static String lastString = new String("N/A\r\n");
 
     private SensorManager mSensorManager = null;
     private Sensor TempSensor = null;
@@ -84,6 +90,8 @@ public class ftWorker implements SensorEventListener {
 
     public readThread read_thread = new readThread(handler);
 
+    public loggerThread logThred = new loggerThread();
+
 
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
@@ -101,6 +109,7 @@ public class ftWorker implements SensorEventListener {
 //        mSensorManager.registerListener(this, TempSensor, SensorManager.SENSOR_DELAY_NORMAL);
         act.registerReceiver(this.mBatInfoReceiver,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        logThred.start();
     }
 
     public boolean hasTorch() {
@@ -145,7 +154,7 @@ public class ftWorker implements SensorEventListener {
                     D2xxManager.FtDeviceInfoListNode fdiln = ftDev.getDeviceInfo();
                     System.out.println(String.format("device desc: %s\n sn: %s\n", fdiln.description, fdiln.serialNumber));
                     // Set Baud Rate
-                    ftDev.setBaudRate(230400);
+                    ftDev.setBaudRate(115200);
                     ftDev.setDataCharacteristics(D2xxManager.FT_DATA_BITS_8,
                                                  D2xxManager.FT_STOP_BITS_1,
                                                  D2xxManager.FT_PARITY_NONE);
@@ -155,6 +164,7 @@ public class ftWorker implements SensorEventListener {
                     {
                         bReadThreadGoing = true;
                         read_thread.start();
+
                     }
                 }
                 else {
@@ -208,11 +218,12 @@ public class ftWorker implements SensorEventListener {
         public void run()
         {
             int i;
-            int pollPeroiod = 50;
+            int pollPeroiod = 5;
             int cpuTempSendPeriod = 2000;
             int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
             int periodNum = 0;
+
 
 //            int cpuTempUpdatePeriodNum = 0;
 //            int cpuTempUpdatePeriod = 1000;
@@ -299,5 +310,57 @@ public class ftWorker implements SensorEventListener {
         //cpuTemp = event.values[0];
     }
 
+
+
+    private class loggerThread  extends Thread {
+
+        public static final int SERVERPORT = 6340;
+
+        loggerThread() {
+            this.setPriority(Thread.MIN_PRIORITY);
+        }
+
+        @Override
+        public void run() {
+            Socket socket = null;
+
+            while(true) {
+                try {
+                    if (socket == null) {
+                        String fpath = "/sdcard/debugServ.txt";
+
+                        File file = new File(fpath);
+                        // If file does not exists, then create it
+                        if (file.exists() == true) {
+                            BufferedReader br = new BufferedReader(new FileReader(fpath));
+                            String SERVERIP = br.readLine(); //"192.168.0.21";
+
+                            socket = new Socket(SERVERIP, SERVERPORT);
+                        }
+                    } else {
+                        if (socket.isConnected() == true) {
+                            socket.getOutputStream().write(lastString.getBytes());
+                            //socket.getOutputStream().write("\r\n".getBytes());
+                            socket.getOutputStream().flush();
+                        }
+                        else {
+                            socket.close();
+                            socket = null;
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    //e.printStackTrace();
+                    socket = null;
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    //e.printStackTrace();
+                }
+            }
+
+        }
+    }
 }
 
