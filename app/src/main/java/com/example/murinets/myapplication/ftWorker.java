@@ -26,9 +26,6 @@ import java.io.File;
 import java.io.BufferedReader;
 import java.io.FileReader;
 
-
-
-
 /**
  * Created by murinets on 03.10.2016.
  */
@@ -67,6 +64,8 @@ public class ftWorker implements SensorEventListener {
     public int getYpos() { return yPos; }
     //private volatile float cpuTemp = 0;
 
+    final String fpath = "/sdcard/debugServ.txt";
+    File configFile = new File(fpath);
 
     final Handler handler =  new Handler()
     {
@@ -109,7 +108,17 @@ public class ftWorker implements SensorEventListener {
 //        mSensorManager.registerListener(this, TempSensor, SensorManager.SENSOR_DELAY_NORMAL);
         act.registerReceiver(this.mBatInfoReceiver,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        logThred.start();
+        if(configFile.exists() == true) {
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(fpath));
+                String SERVERIP = br.readLine(); //"192.168.0.21";
+                logThred.setServerIp(SERVERIP);
+                //logThred.start();
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
     public boolean hasTorch() {
@@ -315,9 +324,15 @@ public class ftWorker implements SensorEventListener {
     private class loggerThread  extends Thread {
 
         public static final int SERVERPORT = 6340;
+        String serverIp = "";
+
 
         loggerThread() {
             this.setPriority(Thread.MIN_PRIORITY);
+        }
+
+        void setServerIp(String svIp){
+            serverIp = svIp;
         }
 
         @Override
@@ -327,21 +342,11 @@ public class ftWorker implements SensorEventListener {
             while(true) {
                 try {
                     if (socket == null) {
-                        String fpath = "/sdcard/debugServ.txt";
-
-                        File file = new File(fpath);
-                        // If file does not exists, then create it
-                        if (file.exists() == true) {
-                            BufferedReader br = new BufferedReader(new FileReader(fpath));
-                            String SERVERIP = br.readLine(); //"192.168.0.21";
-
-                            socket = new Socket(SERVERIP, SERVERPORT);
-                        }
+                        socket = new Socket(serverIp, SERVERPORT); //"192.168.0.21";
                     } else {
                         if (socket.isConnected() == true) {
                             socket.getOutputStream().write(lastString.getBytes());
-                            //socket.getOutputStream().write("\r\n".getBytes());
-                            socket.getOutputStream().flush();
+                            //socket.getOutputStream().write("\r\n".getBytes());socket.getOutputStream().flush();
                         }
                         else {
                             socket.close();
@@ -350,13 +355,13 @@ public class ftWorker implements SensorEventListener {
                     }
                 }
                 catch (Exception e) {
-                    //e.printStackTrace();
+                    e.printStackTrace();
                     socket = null;
                 }
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
-                    //e.printStackTrace();
+                    e.printStackTrace();
                 }
             }
 
