@@ -32,7 +32,7 @@ import java.io.FileReader;
 public class ftWorker implements SensorEventListener {
     public boolean isEnabled;
     private UnityPlayerActivity activity;
-    public static D2xxManager ftD2xx= null;
+    public static D2xxManager ftD2xx = null;
     FT_Device ftDev = null;
     public static int devCount = 0;
     public static int ftConnTryCnt = 0;
@@ -47,8 +47,8 @@ public class ftWorker implements SensorEventListener {
     private SensorManager mSensorManager = null;
     private Sensor TempSensor = null;
 
-    private int xPos=0;
-    private int yPos=0;
+    private int xPos = 0;
+    private int yPos = 0;
 
     //volatile int iCpuTemp = -1488;
     volatile int iBatteryTemp = -1488;
@@ -56,32 +56,46 @@ public class ftWorker implements SensorEventListener {
     volatile int iDistance = -1;
     volatile int iPluginVer = 0x1115;
 
-    public int getBatteryTemp() { return iBatteryTemp; }
-    public int getDistance() { return iDistance; }
-    public int getPluginVer() { return iPluginVer;}
-    public int getHeadTemp() { return iHeadTemp; }
-    public int getXpos() { return xPos; }
-    public int getYpos() { return yPos; }
+    public int getBatteryTemp() {
+        return iBatteryTemp;
+    }
+
+    public int getDistance() {
+        return iDistance;
+    }
+
+    public int getPluginVer() {
+        return iPluginVer;
+    }
+
+    public int getHeadTemp() {
+        return iHeadTemp;
+    }
+
+    public int getXpos() {
+        return xPos;
+    }
+
+    public int getYpos() {
+        return yPos;
+    }
     //private volatile float cpuTemp = 0;
 
     final String fpath = "/sdcard/debugServ.txt";
     File configFile = new File(fpath);
 
-    final Handler handler =  new Handler()
-    {
+    final Handler handler = new Handler() {
         @Override
-        public void handleMessage(Message msg)
-        {
-            lastString = (String)msg.obj;
-            System.out.println("> " + lastString);
+        public void handleMessage(Message msg) {
+            lastString = (String) msg.obj;
+            //System.out.println("> " + lastString);
             try {
                 xPos = Integer.parseInt(lastString.substring(0, 4), 16);
                 yPos = Integer.parseInt(lastString.substring(5, 9), 16);
                 iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
                 iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
 
-            }
-            catch (Exception e){
+            } catch (Exception e) {
 
             }
         }
@@ -92,43 +106,61 @@ public class ftWorker implements SensorEventListener {
     public loggerThread logThred = new loggerThread();
 
 
-
-    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
+    private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context arg0, Intent intent) {
-            iBatteryTemp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0)/10;
+            iBatteryTemp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) / 10;
         }
     };
 
-    public ftWorker(UnityPlayerActivity act)
-    {
+    public ftWorker(UnityPlayerActivity act) {
         activity = act;
 //        mSensorManager = (SensorManager) act.getSystemService(act.SENSOR_SERVICE);
 //        TempSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_AMBIENT_TEMPERATURE);
 //        mSensorManager.registerListener(this, TempSensor, SensorManager.SENSOR_DELAY_NORMAL);
         act.registerReceiver(this.mBatInfoReceiver,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        if(configFile.exists() == true) {
+        if (configFile.exists() == true) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(fpath));
                 String SERVERIP = br.readLine(); //"192.168.0.21";
                 logThred.setServerIp(SERVERIP);
                 //logThred.start();
-            }
-            catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public boolean hasTorch() {
-        return true;
+    public void turnAudioOn() {
+        ftDev.write("son\n".getBytes());
+
     }
 
-    public void turnLightOn() {
+    public void turnAudioOff() {
+        ftDev.write("soff\n".getBytes());
+
     }
 
-    public void turnLightOff() {
+    public void resetMe() {
+        ftDev.write("reset\n".getBytes());
+    }
+
+    public int getFan0RPM()
+    {
+        return 0;
+
+    }
+
+    public int getFan1RPM()
+    {
+        return 0;
+
+    }
+
+    public int getFan2RPM()
+    {
+        return 0;
 
     }
 
@@ -286,7 +318,7 @@ public class ftWorker implements SensorEventListener {
                     periodNum++;
                     if(periodNum >= cpuTempSendPeriodCnt) {
                         //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
-                        ftDev.write(String.format("%d\r\n", getBatteryTemp()).getBytes());
+                        ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
                         periodNum = 0;
                     }
 
