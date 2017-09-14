@@ -103,7 +103,7 @@ public class ftWorker implements SensorEventListener {
 
     public readThread read_thread = new readThread(handler);
 
-    public loggerThread logThred = new loggerThread();
+    //public loggerThread logThred = new loggerThread();
 
 
     private BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver() {
@@ -124,7 +124,7 @@ public class ftWorker implements SensorEventListener {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(fpath));
                 String SERVERIP = br.readLine(); //"192.168.0.21";
-                logThred.setServerIp(SERVERIP);
+                //logThred.setServerIp(SERVERIP);
                 //logThred.start();
             } catch (Exception e) {
                 e.printStackTrace();
