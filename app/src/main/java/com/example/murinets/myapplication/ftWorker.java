@@ -54,7 +54,8 @@ public class ftWorker implements SensorEventListener {
     volatile int iBatteryTemp = -1488;
     volatile int iHeadTemp = -1488;
     volatile int iDistance = -1;
-    volatile int iPluginVer = 0x1115;
+    volatile int iPluginVer = 0x0914;
+    private int cashCount = 0;
 
     public int getBatteryTemp() {
         return iBatteryTemp;
@@ -94,6 +95,8 @@ public class ftWorker implements SensorEventListener {
                 yPos = Integer.parseInt(lastString.substring(5, 9), 16);
                 iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
                 iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+
 
             } catch (Exception e) {
 
@@ -162,6 +165,11 @@ public class ftWorker implements SensorEventListener {
     {
         return 0;
 
+    }
+
+    public int getCashCount()
+    {
+        return cashCount;
     }
 
     public boolean enabled() {

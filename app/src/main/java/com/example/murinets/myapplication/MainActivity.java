@@ -24,7 +24,7 @@ public class MainActivity extends UnityPlayerActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        System.out.println("test test");
+        //System.out.println("test test");
         ftw = new ftWorker(this);
 //        setContentView(R.layout.activity_main);
 //
