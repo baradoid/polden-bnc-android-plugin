@@ -50,6 +50,8 @@ public class ftWorker implements SensorEventListener {
     private int xPos = 0;
     private int yPos = 0;
 
+    private volatile int xPosDeb = 0, yPosDeb = 0;;
+
     //volatile int iCpuTemp = -1488;
     volatile int iBatteryTemp = -1488;
     volatile int iHeadTemp = -1488;
@@ -74,11 +76,11 @@ public class ftWorker implements SensorEventListener {
     }
 
     public int getXpos() {
-        return xPos;
+        return xPosDeb;
     }
 
     public int getYpos() {
-        return yPos;
+        return yPosDeb;
     }
     //private volatile float cpuTemp = 0;
 
@@ -96,6 +98,8 @@ public class ftWorker implements SensorEventListener {
                 iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
                 iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
                 cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+
+
 
 
             } catch (Exception e) {
@@ -263,6 +267,19 @@ public class ftWorker implements SensorEventListener {
             this.setPriority(Thread.MIN_PRIORITY);
         }
 
+        void parseMessage(String str)
+        {
+            xPosDeb+=10;
+            if(xPosDeb >8191){
+                xPosDeb = 0;
+            }
+
+            yPosDeb+=10;
+            if(yPosDeb >8191){
+                yPosDeb = 0;
+            }
+
+        }
         @Override
         public void run()
         {
@@ -310,8 +327,10 @@ public class ftWorker implements SensorEventListener {
 
 
                                 uartMsg.clear();
-                                Message msg = mHandler.obtainMessage(0, new String(bArr));
+                                String msgStr = new String(bArr);
+                                Message msg = mHandler.obtainMessage(0, msgStr);
                                 mHandler.sendMessage(msg);
+                                parseMessage(msgStr);
                             }
                         }
                     }
