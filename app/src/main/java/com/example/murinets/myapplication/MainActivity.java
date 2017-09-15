@@ -38,10 +38,4 @@ public class MainActivity extends UnityPlayerActivity {
 //            }
 //        });
     }
-
-    int data = 111 ;
-    public int getData(){
-        data = data + 1 ;
-        return data;
-    }
 }

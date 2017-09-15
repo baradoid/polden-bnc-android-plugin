@@ -36,11 +36,7 @@ public class ftWorker implements SensorEventListener {
     FT_Device ftDev = null;
     public static int devCount = 0;
     public static int ftConnTryCnt = 0;
-    static public int iavailable = 0;
     public boolean bReadThreadGoing = false;
-
-
-    public static final int readLength = 512;
 
     volatile public static String lastString = new String("N/A\r\n");
 
@@ -87,28 +83,28 @@ public class ftWorker implements SensorEventListener {
     final String fpath = "/sdcard/debugServ.txt";
     File configFile = new File(fpath);
 
-    final Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            lastString = (String) msg.obj;
-            //System.out.println("> " + lastString);
-            try {
-                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
-                yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
-                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
-                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+//    final Handler handler = new Handler() {
+//        @Override
+//        public void handleMessage(Message msg) {
+//            lastString = (String) msg.obj;
+//            //System.out.println("> " + lastString);
+//            try {
+//                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
+//                yPos = Integer.parseInt(lastString.substring(5, 9), 16);
+//                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+//                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+//                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+//
+//
+//
+//
+//            } catch (Exception e) {
+//
+//            }
+//        }
+//    };
 
-
-
-
-            } catch (Exception e) {
-
-            }
-        }
-    };
-
-    public readThread read_thread = new readThread(handler);
+    public readThread read_thread = new readThread();
 
     //public loggerThread logThred = new loggerThread();
 
@@ -179,6 +175,18 @@ public class ftWorker implements SensorEventListener {
     public boolean enabled() {
         return isEnabled;
     }
+
+    public boolean isConnected()
+    {
+        boolean ret = false;
+        if(ftDev == null)
+            ret = false;
+        else
+            ret = ftDev.isOpen();
+
+        return ret;
+    }
+
 
     public void rescanFt()
     {
@@ -257,17 +265,55 @@ public class ftWorker implements SensorEventListener {
 
     private class readThread  extends Thread
     {
-        Handler mHandler;
-        ArrayList<Byte> uartMsg = new ArrayList<Byte>();
-        byte[] readData = new byte[readLength];
-        char[] readDataToText = new char[readLength];
+        public static final int readLength = 512;
+        //ArrayList<Byte> uartMsg = new ArrayList<Byte>();
+        byte[] dataBuf = new byte[readLength];
+        //char[] readDataToText = new char[readLength];
 
-        readThread(Handler h){
-            mHandler = h;
-            this.setPriority(Thread.MIN_PRIORITY);
+        readThread(){
+            //this.setPriority(Thread.MIN_PRIORITY);
         }
 
-        void parseMessage(String str)
+
+        @Override
+        public void run()
+        {
+            int pollPeroiod = 5;
+            int cpuTempSendPeriod = 2000;
+            long lastCpuTempSend = 0;
+            //int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
+
+            int periodNum = 0;
+
+            char msg[] = new char[200];
+            int curMsgInd = 0;
+
+            while(true == bReadThreadGoing)
+            {
+                synchronized(ftDev)
+                {
+                    int iavailable = ftDev.read(dataBuf, readLength, pollPeroiod);
+                    for (int i = 0; i < iavailable; i++) {
+                        msg[curMsgInd] = (char)dataBuf[i];
+                        if(msg[curMsgInd++] == '\n'){
+                            curMsgInd=0;
+                            //parseMessage(msg);
+                            //parseMessage(msgStr);
+                        }
+                    }
+
+                    if( (System.currentTimeMillis()- lastCpuTempSend)>cpuTempSendPeriod) {
+                        lastCpuTempSend = System.currentTimeMillis();
+                        //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
+                        ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
+                        periodNum = 0;
+                    }
+
+                }
+            }
+        }
+
+        void parseMessage(char str[])
         {
             xPosDeb+=10;
             if(xPosDeb >8191){
@@ -279,94 +325,21 @@ public class ftWorker implements SensorEventListener {
                 yPosDeb = 0;
             }
 
-        }
-        @Override
-        public void run()
-        {
-            int i;
-            int pollPeroiod = 5;
-            int cpuTempSendPeriod = 2000;
-            int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
-
-            int periodNum = 0;
-
-
-//            int cpuTempUpdatePeriodNum = 0;
-//            int cpuTempUpdatePeriod = 1000;
-//            int cpuTempUpdatePeriodCnt = cpuTempSendPeriod/pollPeroiod;
-
-            while(true == bReadThreadGoing)
-            {
-                try {
-                    Thread.sleep(pollPeroiod);
-                } catch (InterruptedException e) {
-                }
-
-                synchronized(ftDev)
-                {
-                    iavailable = ftDev.getQueueStatus();
-                    if (iavailable > 0) {
-
-                        if(iavailable > readLength){
-                            iavailable = readLength;
-                        }
-
-                        ftDev.read(readData, iavailable);
-
-                        for (i = 0; i < iavailable; i++) {
-                            uartMsg.add(readData[i]);
-                            readDataToText[i] = (char) readData[i];
-                            if(readDataToText[i] == '\n'){
-                                byte bArr[] = new byte[uartMsg.size()];
-
-                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
-                                    bArr[bi] = (byte) uartMsg.get(bi);
-                                }
-                                //bArr[bArr.length-2] = 0;
-                                //bArr[bArr.length-1] = 0;
-
-
-                                uartMsg.clear();
-                                String msgStr = new String(bArr);
-                                Message msg = mHandler.obtainMessage(0, msgStr);
-                                mHandler.sendMessage(msg);
-                                parseMessage(msgStr);
-                            }
-                        }
-                    }
-
-//                    cpuTempUpdatePeriodNum++;
-//                    if(cpuTempUpdatePeriodNum >= cpuTempUpdatePeriodCnt){
-//                        //updateCpuTemp();
-//                        cpuTempUpdatePeriodNum = 0;
-//                    }
-
-
-                    periodNum++;
-                    if(periodNum >= cpuTempSendPeriodCnt) {
-                        //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
-                        ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
-                        periodNum = 0;
-                    }
-
-                }
+            try {
+//                xPos = Integer.parseInt(new String(str, 0, 4), 16);
+//                yPos = Integer.parseInt(lastString.substring(5, 9), 16);
+//                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+//                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+//                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+            } catch (Exception e) {
             }
         }
+
     }
 
 
 
 
-    public boolean isConnected()
-    {
-        boolean ret = false;
-        if(ftDev == null)
-            ret = false;
-        else
-            ret = ftDev.isOpen();
-
-        return ret;
-    }
 
     @Override
     public final void onAccuracyChanged(Sensor sensor, int accuracy) {
@@ -380,51 +353,51 @@ public class ftWorker implements SensorEventListener {
 
 
 
-    private class loggerThread  extends Thread {
-
-        public static final int SERVERPORT = 6340;
-        String serverIp = "";
-
-
-        loggerThread() {
-            this.setPriority(Thread.MIN_PRIORITY);
-        }
-
-        void setServerIp(String svIp){
-            serverIp = svIp;
-        }
-
-        @Override
-        public void run() {
-            Socket socket = null;
-
-            while(true) {
-                try {
-                    if (socket == null) {
-                        socket = new Socket(serverIp, SERVERPORT); //"192.168.0.21";
-                    } else {
-                        if (socket.isConnected() == true) {
-                            socket.getOutputStream().write(lastString.getBytes());
-                            //socket.getOutputStream().write("\r\n".getBytes());socket.getOutputStream().flush();
-                        }
-                        else {
-                            socket.close();
-                            socket = null;
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                    socket = null;
-                }
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-        }
-    }
+//    private class loggerThread  extends Thread {
+//
+//        public static final int SERVERPORT = 6340;
+//        String serverIp = "";
+//
+//
+//        loggerThread() {
+//            this.setPriority(Thread.MIN_PRIORITY);
+//        }
+//
+//        void setServerIp(String svIp){
+//            serverIp = svIp;
+//        }
+//
+//        @Override
+//        public void run() {
+//            Socket socket = null;
+//
+//            while(true) {
+//                try {
+//                    if (socket == null) {
+//                        socket = new Socket(serverIp, SERVERPORT); //"192.168.0.21";
+//                    } else {
+//                        if (socket.isConnected() == true) {
+//                            socket.getOutputStream().write(lastString.getBytes());
+//                            //socket.getOutputStream().write("\r\n".getBytes());socket.getOutputStream().flush();
+//                        }
+//                        else {
+//                            socket.close();
+//                            socket = null;
+//                        }
+//                    }
+//                }
+//                catch (Exception e) {
+//                    e.printStackTrace();
+//                    socket = null;
+//                }
+//                try {
+//                    Thread.sleep(500);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//        }
+//    }
 }
 
