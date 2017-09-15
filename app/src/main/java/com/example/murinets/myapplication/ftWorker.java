@@ -37,6 +37,7 @@ public class ftWorker implements SensorEventListener {
     public static int devCount = 0;
     public static int ftConnTryCnt = 0;
     public boolean bReadThreadGoing = false;
+    public static int iavailable=0;
 
     volatile public static String lastString = new String("N/A\r\n");
 
@@ -80,8 +81,8 @@ public class ftWorker implements SensorEventListener {
     }
     //private volatile float cpuTemp = 0;
 
-    final String fpath = "/sdcard/debugServ.txt";
-    File configFile = new File(fpath);
+    //final String fpath = "/sdcard/debugServ.txt";
+    //File configFile = new File(fpath);
 
 //    final Handler handler = new Handler() {
 //        @Override
@@ -123,16 +124,16 @@ public class ftWorker implements SensorEventListener {
 //        mSensorManager.registerListener(this, TempSensor, SensorManager.SENSOR_DELAY_NORMAL);
         act.registerReceiver(this.mBatInfoReceiver,
                 new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        if (configFile.exists() == true) {
-            try {
-                BufferedReader br = new BufferedReader(new FileReader(fpath));
-                String SERVERIP = br.readLine(); //"192.168.0.21";
-                //logThred.setServerIp(SERVERIP);
-                //logThred.start();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+//        if (configFile.exists() == true) {
+//            try {
+//                //BufferedReader br = new BufferedReader(new FileReader(fpath));
+//                //String SERVERIP = br.readLine(); //"192.168.0.21";
+//                //logThred.setServerIp(SERVERIP);
+//                //logThred.start();
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     public void turnAudioOn() {
@@ -265,16 +266,9 @@ public class ftWorker implements SensorEventListener {
 
     private class readThread  extends Thread
     {
-        public static final int readLength = 512;
-        //ArrayList<Byte> uartMsg = new ArrayList<Byte>();
-        byte[] dataBuf = new byte[readLength];
-        //char[] readDataToText = new char[readLength];
-
         readThread(){
-            //this.setPriority(Thread.MIN_PRIORITY);
+            this.setPriority(Thread.MIN_PRIORITY);
         }
-
-
         @Override
         public void run()
         {
@@ -287,15 +281,19 @@ public class ftWorker implements SensorEventListener {
 
             char msg[] = new char[200];
             int curMsgInd = 0;
+            final int readLength = 512;
+            //ArrayList<Byte> uartMsg = new ArrayList<Byte>();
+            byte[] dataBuf = new byte[readLength];
+            //char[] readDataToText = new char[readLength];
 
             while(true == bReadThreadGoing)
             {
                 synchronized(ftDev)
                 {
-                    int iavailable = ftDev.read(dataBuf, readLength, pollPeroiod);
-                    for (int i = 0; i < iavailable; i++) {
+                    int iavail = ftDev.read(dataBuf, readLength, pollPeroiod);
+                    for (int i = 0; i < iavail; i++) {
                         msg[curMsgInd] = (char)dataBuf[i];
-                        if(msg[curMsgInd++] == '\n'){
+                        if((msg[curMsgInd++] == '\n') || (curMsgInd >= 199)){
                             curMsgInd=0;
                             //parseMessage(msg);
                             //parseMessage(msgStr);
