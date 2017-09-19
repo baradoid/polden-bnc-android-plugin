@@ -253,7 +253,7 @@ public class ftWorker implements SensorEventListener {
             int curMsgInd = 0;
             long lastCpuTempSend = 0;
 
-            ftDev.setLatencyTimer((byte)2);
+            ftDev.setLatencyTimer((byte)1);
 
 //            int cpuTempUpdatePeriodNum = 0;
 //            int cpuTempUpdatePeriod = 1000;
@@ -300,20 +300,6 @@ public class ftWorker implements SensorEventListener {
                             }
                         }
                     }
-
-//                    cpuTempUpdatePeriodNum++;
-//                    if(cpuTempUpdatePeriodNum >= cpuTempUpdatePeriodCnt){
-//                        //updateCpuTemp();
-//                        cpuTempUpdatePeriodNum = 0;
-//                    }
-
-
-//                    periodNum++;
-//                    if(periodNum >= cpuTempSendPeriodCnt) {
-//                        //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
-//                        ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
-//                        periodNum = 0;
-//                    }
 
                     if( (System.currentTimeMillis()- lastCpuTempSend)>cpuTempSendPeriod) {
                         lastCpuTempSend = System.currentTimeMillis();
