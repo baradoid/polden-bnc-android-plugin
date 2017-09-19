@@ -86,7 +86,26 @@ public class ftWorker implements SensorEventListener {
     File configFile = new File(fpath);
 
 
-    public readThread read_thread = new readThread();
+    final Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            lastString = (String) msg.obj;
+            //System.out.println("> " + lastString);
+            try {
+                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
+                yPos = Integer.parseInt(lastString.substring(5, 9), 16);
+                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+
+            } catch (Exception e) {
+
+            }
+        }
+    };
+
+
+    public readThread read_thread = new readThread(handler);
 
     //public loggerThread logThred = new loggerThread();
 
@@ -235,21 +254,22 @@ public class ftWorker implements SensorEventListener {
 
     private class readThread  extends Thread
     {
-
-
-        readThread(){
+        Handler mHandler;
+        readThread(Handler h){
+            mHandler = h;
+            this.setPriority(Thread.MIN_PRIORITY);
         }
 
         @Override
         public void run()
         {
-            int pollPeroiod = 2;
+            int pollPeroiod = 1;
             int cpuTempSendPeriod = 2000;
             //int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
             //int periodNum = 0;
             byte[] dataBuf = new byte[readLength];
-            char msg[] = new char[200];
+            char charBuf[] = new char[200];
             int curMsgInd = 0;
             long lastCpuTempSend = 0;
 
@@ -261,10 +281,11 @@ public class ftWorker implements SensorEventListener {
 
             while(true == bReadThreadGoing)
             {
-//                try {
-//                    Thread.sleep(pollPeroiod);
-//                } catch (InterruptedException e) {
-//                }
+                try {
+                    //Thread.sleep(pollPeroiod);
+                    Thread.yield();
+                } catch (Exception e) {
+                }
 
                 synchronized(ftDev)
                 {
@@ -278,25 +299,11 @@ public class ftWorker implements SensorEventListener {
                         ftDev.read(dataBuf, iavailable, 0);
 
                         for (int i = 0; i < iavailable; i++) {
-                            msg[curMsgInd] = (char)dataBuf[i];
-                            if((msg[curMsgInd++] == '\n') || (curMsgInd >= 199)){
+                            charBuf[curMsgInd] = (char)dataBuf[i];
+                            if((charBuf[curMsgInd++] == '\n') || (curMsgInd >= 199)){
                                 curMsgInd=0;
-                                //parseMessage(msg);
-                                //parseMessage(msgStr);
-                                lastString = new String(msg);
-                                //System.out.println("> " + lastString);
-                                try {
-                                    xPos = Integer.parseInt(lastString.substring(0, 4), 16);
-                                    yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-
-                                    iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
-                                    iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
-                                    cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
-
-
-                                } catch (Exception e) {
-
-                                }
+                                Message msg = mHandler.obtainMessage(0, new String(charBuf));
+                                mHandler.sendMessage(msg);
                             }
                         }
                     }
