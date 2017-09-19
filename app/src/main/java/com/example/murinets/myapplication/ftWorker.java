@@ -235,9 +235,7 @@ public class ftWorker implements SensorEventListener {
 
     private class readThread  extends Thread
     {
-        ArrayList<Byte> uartMsg = new ArrayList<Byte>();
-        byte[] readData = new byte[readLength];
-        char[] readDataToText = new char[readLength];
+
 
         readThread(){
         }
@@ -247,12 +245,15 @@ public class ftWorker implements SensorEventListener {
         {
             int pollPeroiod = 2;
             int cpuTempSendPeriod = 2000;
-            int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
+            //int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
-            int periodNum = 0;
+            //int periodNum = 0;
+            byte[] dataBuf = new byte[readLength];
             char msg[] = new char[200];
             int curMsgInd = 0;
+            long lastCpuTempSend = 0;
 
+            ftDev.setLatencyTimer((byte)2);
 
 //            int cpuTempUpdatePeriodNum = 0;
 //            int cpuTempUpdatePeriod = 1000;
@@ -260,10 +261,10 @@ public class ftWorker implements SensorEventListener {
 
             while(true == bReadThreadGoing)
             {
-                try {
-                    Thread.sleep(pollPeroiod);
-                } catch (InterruptedException e) {
-                }
+//                try {
+//                    Thread.sleep(pollPeroiod);
+//                } catch (InterruptedException e) {
+//                }
 
                 synchronized(ftDev)
                 {
@@ -274,10 +275,10 @@ public class ftWorker implements SensorEventListener {
                             iavailable = readLength;
                         }
 
-                        ftDev.read(readData, iavailable, 0);
+                        ftDev.read(dataBuf, iavailable, 0);
 
                         for (int i = 0; i < iavailable; i++) {
-                            msg[curMsgInd] = (char)readData[i];
+                            msg[curMsgInd] = (char)dataBuf[i];
                             if((msg[curMsgInd++] == '\n') || (curMsgInd >= 199)){
                                 curMsgInd=0;
                                 //parseMessage(msg);
@@ -298,26 +299,6 @@ public class ftWorker implements SensorEventListener {
                                 }
                             }
                         }
-
-//                        for (int i = 0; i < iavailable; i++) {
-//                            uartMsg.add(readData[i]);
-//                            readDataToText[i] = (char) readData[i];
-//                            if(readDataToText[i] == '\n'){
-//                                byte bArr[] = new byte[uartMsg.size()];
-//
-//                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
-//                                    bArr[bi] = (byte) uartMsg.get(bi);
-//                                }
-//                                //bArr[bArr.length-2] = 0;
-//                                //bArr[bArr.length-1] = 0;
-//                                uartMsg.clear();
-////                                Message msg = mHandler.obtainMessage(0, new String(bArr));
-////                                mHandler.sendMessage(msg);
-//                            }
-//                        }
-//                        yPos+=10;
-//                        if(yPos>8191)
-//                            yPos = 0;
                     }
 
 //                    cpuTempUpdatePeriodNum++;
@@ -327,11 +308,17 @@ public class ftWorker implements SensorEventListener {
 //                    }
 
 
-                    periodNum++;
-                    if(periodNum >= cpuTempSendPeriodCnt) {
+//                    periodNum++;
+//                    if(periodNum >= cpuTempSendPeriodCnt) {
+//                        //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
+//                        ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
+//                        periodNum = 0;
+//                    }
+
+                    if( (System.currentTimeMillis()- lastCpuTempSend)>cpuTempSendPeriod) {
+                        lastCpuTempSend = System.currentTimeMillis();
                         //ftDev.write(String.format("%02d\r\n", (int) cpuTemp).getBytes());
                         ftDev.write(String.format("t=%d\n", getBatteryTemp()).getBytes());
-                        periodNum = 0;
                     }
 
                 }
