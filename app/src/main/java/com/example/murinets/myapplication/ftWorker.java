@@ -272,6 +272,7 @@ public class ftWorker implements SensorEventListener {
             char charBuf[] = new char[200];
             int curMsgInd = 0;
             long lastCpuTempSend = 0;
+            char charMsgReadyBuf[] = null;
 
             ftDev.setLatencyTimer((byte)1);
 
@@ -282,7 +283,7 @@ public class ftWorker implements SensorEventListener {
             while(true == bReadThreadGoing)
             {
                 try {
-                    //Thread.sleep(pollPeroiod);
+                    //Thread.sleep(10);
                     Thread.yield();
                 } catch (Exception e) {
                 }
@@ -296,15 +297,20 @@ public class ftWorker implements SensorEventListener {
                             iavailable = readLength;
                         }
 
-                        ftDev.read(dataBuf, iavailable, 0);
+                        ftDev.read(dataBuf, iavailable);
 
                         for (int i = 0; i < iavailable; i++) {
                             charBuf[curMsgInd] = (char)dataBuf[i];
                             if((charBuf[curMsgInd++] == '\n') || (curMsgInd >= 199)){
+                                charMsgReadyBuf = new char[curMsgInd];
+                                System.arraycopy(charBuf, 0, charMsgReadyBuf, 0, curMsgInd);
                                 curMsgInd=0;
-                                Message msg = mHandler.obtainMessage(0, new String(charBuf));
-                                mHandler.sendMessage(msg);
                             }
+                        }
+                        if(charMsgReadyBuf != null){
+                            Message msg = mHandler.obtainMessage(0, new String(charMsgReadyBuf));
+                            mHandler.sendMessage(msg);
+                            charMsgReadyBuf = null;
                         }
                     }
 
