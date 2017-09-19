@@ -47,8 +47,8 @@ public class ftWorker implements SensorEventListener {
     private SensorManager mSensorManager = null;
     private Sensor TempSensor = null;
 
-    private int xPos = 0;
-    private int yPos = 0;
+    private volatile int xPos = 0;
+    private volatile int yPos = 0;
 
     //volatile int iCpuTemp = -1488;
     volatile int iBatteryTemp = -1488;
@@ -85,27 +85,8 @@ public class ftWorker implements SensorEventListener {
     final String fpath = "/sdcard/debugServ.txt";
     File configFile = new File(fpath);
 
-    final Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-//            lastString = (String) msg.obj;
-//            //System.out.println("> " + lastString);
-//            try {
-//                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
-//                //yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-//
-//                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
-//                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
-//                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
-//
-//
-//            } catch (Exception e) {
-//
-//            }
-        }
-    };
 
-    public readThread read_thread = new readThread(handler);
+    public readThread read_thread = new readThread();
 
     //public loggerThread logThred = new loggerThread();
 
@@ -254,14 +235,11 @@ public class ftWorker implements SensorEventListener {
 
     private class readThread  extends Thread
     {
-        Handler mHandler;
         ArrayList<Byte> uartMsg = new ArrayList<Byte>();
         byte[] readData = new byte[readLength];
         char[] readDataToText = new char[readLength];
 
-        readThread(Handler h){
-            mHandler = h;
-            //this.setPriority(Thread.MIN_PRIORITY);
+        readThread(){
         }
 
         @Override
