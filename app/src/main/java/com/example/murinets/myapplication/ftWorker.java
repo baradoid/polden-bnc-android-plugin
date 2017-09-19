@@ -88,19 +88,20 @@ public class ftWorker implements SensorEventListener {
     final Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            lastString = (String) msg.obj;
-            //System.out.println("> " + lastString);
-            try {
-                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
-                yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
-                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
-                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
-
-
-            } catch (Exception e) {
-
-            }
+//            lastString = (String) msg.obj;
+//            //System.out.println("> " + lastString);
+//            try {
+//                xPos = Integer.parseInt(lastString.substring(0, 4), 16);
+//                //yPos = Integer.parseInt(lastString.substring(5, 9), 16);
+//
+//                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+//                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+//                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+//
+//
+//            } catch (Exception e) {
+//
+//            }
         }
     };
 
@@ -267,7 +268,7 @@ public class ftWorker implements SensorEventListener {
         public void run()
         {
             int i;
-            int pollPeroiod = 5;
+            int pollPeroiod = 2;
             int cpuTempSendPeriod = 2000;
             int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
@@ -294,7 +295,7 @@ public class ftWorker implements SensorEventListener {
                             iavailable = readLength;
                         }
 
-                        ftDev.read(readData, iavailable);
+                        ftDev.read(readData, iavailable, 0);
 
                         for (i = 0; i < iavailable; i++) {
                             uartMsg.add(readData[i]);
@@ -310,10 +311,29 @@ public class ftWorker implements SensorEventListener {
 
 
                                 uartMsg.clear();
-                                Message msg = mHandler.obtainMessage(0, new String(bArr));
-                                mHandler.sendMessage(msg);
+//                                Message msg = mHandler.obtainMessage(0, new String(bArr));
+//                                mHandler.sendMessage(msg);
+
+                                lastString = new String(bArr);
+                                //System.out.println("> " + lastString);
+                                try {
+                                    xPos = Integer.parseInt(lastString.substring(0, 4), 16);
+                                    yPos = Integer.parseInt(lastString.substring(5, 9), 16);
+
+                                    iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+                                    iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
+                                    cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+
+
+                                } catch (Exception e) {
+
+                                }
+
                             }
                         }
+//                        yPos+=10;
+//                        if(yPos>8191)
+//                            yPos = 0;
                     }
 
 //                    cpuTempUpdatePeriodNum++;
