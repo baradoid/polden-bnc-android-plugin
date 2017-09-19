@@ -245,12 +245,13 @@ public class ftWorker implements SensorEventListener {
         @Override
         public void run()
         {
-            int i;
             int pollPeroiod = 2;
             int cpuTempSendPeriod = 2000;
             int cpuTempSendPeriodCnt = cpuTempSendPeriod/pollPeroiod;
 
             int periodNum = 0;
+            char msg[] = new char[200];
+            int curMsgInd = 0;
 
 
 //            int cpuTempUpdatePeriodNum = 0;
@@ -275,24 +276,13 @@ public class ftWorker implements SensorEventListener {
 
                         ftDev.read(readData, iavailable, 0);
 
-                        for (i = 0; i < iavailable; i++) {
-                            uartMsg.add(readData[i]);
-                            readDataToText[i] = (char) readData[i];
-                            if(readDataToText[i] == '\n'){
-                                byte bArr[] = new byte[uartMsg.size()];
-
-                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
-                                    bArr[bi] = (byte) uartMsg.get(bi);
-                                }
-                                //bArr[bArr.length-2] = 0;
-                                //bArr[bArr.length-1] = 0;
-
-
-                                uartMsg.clear();
-//                                Message msg = mHandler.obtainMessage(0, new String(bArr));
-//                                mHandler.sendMessage(msg);
-
-                                lastString = new String(bArr);
+                        for (int i = 0; i < iavailable; i++) {
+                            msg[curMsgInd] = (char)readData[i];
+                            if((msg[curMsgInd++] == '\n') || (curMsgInd >= 199)){
+                                curMsgInd=0;
+                                //parseMessage(msg);
+                                //parseMessage(msgStr);
+                                lastString = new String(msg);
                                 //System.out.println("> " + lastString);
                                 try {
                                     xPos = Integer.parseInt(lastString.substring(0, 4), 16);
@@ -306,9 +296,25 @@ public class ftWorker implements SensorEventListener {
                                 } catch (Exception e) {
 
                                 }
-
                             }
                         }
+
+//                        for (int i = 0; i < iavailable; i++) {
+//                            uartMsg.add(readData[i]);
+//                            readDataToText[i] = (char) readData[i];
+//                            if(readDataToText[i] == '\n'){
+//                                byte bArr[] = new byte[uartMsg.size()];
+//
+//                                for(int bi=0; bi<bArr.length; bi++) { //wo \r\n
+//                                    bArr[bi] = (byte) uartMsg.get(bi);
+//                                }
+//                                //bArr[bArr.length-2] = 0;
+//                                //bArr[bArr.length-1] = 0;
+//                                uartMsg.clear();
+////                                Message msg = mHandler.obtainMessage(0, new String(bArr));
+////                                mHandler.sendMessage(msg);
+//                            }
+//                        }
 //                        yPos+=10;
 //                        if(yPos>8191)
 //                            yPos = 0;
