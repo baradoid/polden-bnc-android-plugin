@@ -260,7 +260,7 @@ public class ftWorker implements SensorEventListener {
 
         readThread(Handler h){
             mHandler = h;
-            this.setPriority(Thread.MIN_PRIORITY);
+            //this.setPriority(Thread.MIN_PRIORITY);
         }
 
         @Override
