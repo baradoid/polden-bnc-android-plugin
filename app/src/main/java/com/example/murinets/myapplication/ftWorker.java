@@ -283,7 +283,7 @@ public class ftWorker implements SensorEventListener {
             while(true == bReadThreadGoing)
             {
                 try {
-                    //Thread.sleep(10);
+                    //Thread.sleep(5);
                     Thread.yield();
                 } catch (Exception e) {
                 }
