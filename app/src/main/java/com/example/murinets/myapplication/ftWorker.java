@@ -94,9 +94,9 @@ public class ftWorker implements SensorEventListener {
             try {
                 xPos = Integer.parseInt(lastString.substring(0, 4), 16);
                 yPos = Integer.parseInt(lastString.substring(5, 9), 16);
-                iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
-                iDistance = Integer.parseInt(lastString.substring(15, 19), 10);
-                cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
+                //iHeadTemp = Integer.parseInt(lastString.substring(10, 14), 10);
+                iDistance = Integer.parseInt(lastString.substring(10, 14), 10);
+                //cashCount = Integer.parseInt(lastString.substring(40, 46), 10);
 
             } catch (Exception e) {
 
@@ -204,7 +204,7 @@ public class ftWorker implements SensorEventListener {
                     D2xxManager.FtDeviceInfoListNode fdiln = ftDev.getDeviceInfo();
                     System.out.println(String.format("device desc: %s\n sn: %s\n", fdiln.description, fdiln.serialNumber));
                     // Set Baud Rate
-                    ftDev.setBaudRate(115200);
+                    ftDev.setBaudRate(14400);
                     ftDev.setDataCharacteristics(D2xxManager.FT_DATA_BITS_8,
                                                  D2xxManager.FT_STOP_BITS_1,
                                                  D2xxManager.FT_PARITY_NONE);

@@ -2,9 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/MyApplication2 - Copy.iml" filepath="$PROJECT_DIR$/MyApplication2 - Copy.iml" />
+      <module fileurl="file://C:\dev\polden-binoc\polden-bnc-android-plugin\MyApplication2 - Copy.iml" filepath="C:\dev\polden-binoc\polden-bnc-android-plugin\MyApplication2 - Copy.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/libmylibrary/libmylibrary.iml" filepath="$PROJECT_DIR$/libmylibrary/libmylibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/polden-bnc-android-plugin.iml" filepath="$PROJECT_DIR$/polden-bnc-android-plugin.iml" />
     </modules>
   </component>
 </project>
