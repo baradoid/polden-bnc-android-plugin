@@ -351,7 +351,7 @@ public class ftWorker implements SensorEventListener {
 
 
 
-    private class loggerThread  extends Thread {
+ /*   private class loggerThread  extends Thread {
 
         public static final int SERVERPORT = 6340;
         String serverIp = "";
@@ -396,6 +396,6 @@ public class ftWorker implements SensorEventListener {
             }
 
         }
-    }
+    }*/
 }
 
